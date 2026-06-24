@@ -11,14 +11,19 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
+	_ "embed"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/pedrorobsonleao/golangapi/src/api"
 )
+
+//go:embed openapi.yaml
+var openAPISpec []byte
 
 func main() {
 	// 1. Load environment variables
@@ -118,6 +123,68 @@ func main() {
 		})
 	})
 
+	// 7. Register Swagger UI Endpoints
+	e.GET("/swagger-ui/openapi.yaml", func(c echo.Context) error {
+		return c.Blob(http.StatusOK, "text/yaml; charset=utf-8", openAPISpec)
+	})
+
+	e.GET("/swagger-ui", func(c echo.Context) error {
+		html := `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Swagger UI</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+  <style>
+    html {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    *,
+    *:before,
+    *:after {
+      box-sizing: inherit;
+    }
+    body {
+      margin: 0;
+      background: #fafafa;
+    }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js" charset="UTF-8"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+  <script>
+    window.onload = function() {
+      const ui = SwaggerUIBundle({
+        url: "/swagger-ui/openapi.yaml",
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "StandaloneLayout"
+      });
+      window.ui = ui;
+    };
+  </script>
+</body>
+</html>`
+		return c.HTML(http.StatusOK, html)
+	})
+
+	// Also handle trailing slash /swagger-ui/
+	e.GET("/swagger-ui/", func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "/swagger-ui")
+	})
+
 	// Start HTTP Server
 	log.Printf("Starting HTTP server on port %s...", appPort)
 	if err := e.Start(":" + appPort); err != nil {
@@ -126,14 +193,18 @@ func main() {
 }
 
 // jwtMiddleware validates JWT tokens using an RSA public key.
-// Public endpoints (/login and /actuator/*) are bypassed.
+// Public endpoints (/login, /actuator/*, /swagger-ui*) are bypassed.
 // All other endpoints require a valid "Authorization: Bearer <JWT_TOKEN>" header.
 func jwtMiddleware(verifyKey *rsa.PublicKey) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			path := c.Path()
 			// Exclude public paths
-			if path == "/login" || path == "/actuator/health" || path == "/actuator/sbom" || path == "/actuator/sbom/application" {
+			if path == "/login" ||
+				path == "/actuator/health" ||
+				path == "/actuator/sbom" ||
+				path == "/actuator/sbom/application" ||
+				strings.HasPrefix(path, "/swagger-ui") {
 				return next(c)
 			}
 

@@ -350,3 +350,66 @@ func TestDeletePessoa(t *testing.T) {
 		t.Errorf("Expected status NotFound, got %d", rec.Code)
 	}
 }
+
+func TestSwaggerUI(t *testing.T) {
+	e := echo.New()
+
+	e.GET("/swagger-ui/openapi.yaml", func(c echo.Context) error {
+		return c.Blob(http.StatusOK, "text/yaml; charset=utf-8", openAPISpec)
+	})
+
+	e.GET("/swagger-ui", func(c echo.Context) error {
+		html := `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Swagger UI</title>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+</body>
+</html>`
+		return c.HTML(http.StatusOK, html)
+	})
+
+	e.GET("/swagger-ui/", func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "/swagger-ui")
+	})
+
+	// 1. Test /swagger-ui
+	req := httptest.NewRequest(http.MethodGet, "/swagger-ui", nil)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status OK for /swagger-ui, got %d", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "Swagger UI") {
+		t.Errorf("Expected body to contain 'Swagger UI'")
+	}
+
+	// 2. Test /swagger-ui/ (redirect)
+	req = httptest.NewRequest(http.MethodGet, "/swagger-ui/", nil)
+	rec = httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusMovedPermanently {
+		t.Errorf("Expected status MovedPermanently for /swagger-ui/, got %d", rec.Code)
+	}
+	if rec.Header().Get("Location") != "/swagger-ui" {
+		t.Errorf("Expected Location header to be /swagger-ui, got %s", rec.Header().Get("Location"))
+	}
+
+	// 3. Test /swagger-ui/openapi.yaml
+	req = httptest.NewRequest(http.MethodGet, "/swagger-ui/openapi.yaml", nil)
+	rec = httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status OK for /swagger-ui/openapi.yaml, got %d", rec.Code)
+	}
+	if rec.Header().Get("Content-Type") != "text/yaml; charset=utf-8" {
+		t.Errorf("Expected Content-Type text/yaml; charset=utf-8, got %s", rec.Header().Get("Content-Type"))
+	}
+}

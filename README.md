@@ -51,6 +51,7 @@ Para garantir manutenções futuras limpas e elegantes, todo o código em Go foi
     *   `src/server.go`: Implementa os handlers HTTP definidos na interface gerada do OpenAPI. Conecta e valida parâmetros de entrada.
     *   `src/store.go`: Camada robusta de acesso a dados (Repository Pattern) que abstrai as queries SQL brutas para o banco MariaDB.
     *   `src/server_test.go`: Suite de testes unitários com Mock de banco de dados para garantir alta cobertura e segurança antes de compilar.
+    *   `src/openapi.yaml`: Arquivo do contrato da especificação OpenAPI 3.0 utilizado e embutido estaticamente na API para servir o Swagger UI.
 *   **`src/api/`**: Subpasta dedicada para isolar o pacote auto-gerado.
     *   `src/api/api.gen.go`: Scaffold de tipos, wrappers e interfaces geradas a partir do OpenAPI.
 *   **`db/`**: Guarda os segredos de senhas de root e usuários do MariaDB (`pwd.txt`).
@@ -107,3 +108,14 @@ Aguarde o container de testes `api_tests` finalizar. Ao término com sucesso, vo
 `api_tests exited with code 0`
 
 Todos os relatórios visuais HTML gerados pelo Newman e pelo gerador de cobertura de código do Go estão configurados no `.gitignore` para que **nunca sejam comitados por engano** no repositório.
+
+---
+
+## 4. Consulta e Visualização do Swagger UI
+
+O servidor Go serve nativamente a documentação interativa baseada no Swagger UI:
+
+- **Swagger UI Interativo**: `http://localhost:8080/swagger-ui` (ou na porta definida por `APP_PORT`).
+- **Contrato OpenAPI (YAML)**: `http://localhost:8080/swagger-ui/openapi.yaml`.
+
+Esta documentação é 100% autônoma e pública (bypassa a verificação de JWT), carregando dinamicamente a especificação OpenAPI 3.0 definida em `src/openapi.yaml` que foi embutida diretamente no executável final.

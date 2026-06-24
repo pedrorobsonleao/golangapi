@@ -32,6 +32,7 @@ golangapi/
 │   ├── api/                   # Isolated folder containing generated files (package api)
 │   │   └── api.gen.go         # Boilerplate structs and interface generated from OpenAPI
 │   ├── main.go                # Application startup, DB retry loop, RSA generation, routes, and middleware
+│   ├── openapi.yaml           # Embedded OpenAPI specification for Swagger UI documentation
 │   ├── server.go              # Echo HTTP handlers implementation (implements api.ServerInterface)
 │   ├── server_test.go         # Robust handler unit tests utilizing the MockStore
 │   └── store.go               # SQL Database Access Layer (implementing Store interface)
@@ -69,6 +70,11 @@ All future enhancements and bug fixes must rigorously adhere to these technical 
 ### E. Documentation & Comments
 - **Human-centric Comments**: Document all exported functions, types, and interfaces using standard GoDoc comments.
 - **Explain *Why*, not *What***: Add internal comments within complex parts (e.g., the JWT parsing logic or retry connection blocks) focusing on the technical rationale and security measures rather than simply restating the instructions.
+
+### F. Swagger UI & Contract Serving
+- **Swagger UI**: Serve the standard interactive Swagger UI HTML at `/swagger-ui`.
+- **OpenAPI Contract**: Serve the embedded raw OpenAPI 3.0 contract at `/swagger-ui/openapi.yaml`.
+- **Middleware Exemption**: Ensure all routes matching `/swagger-ui` (or starting with it) bypass JWT authentication middleware to remain publicly accessible.
 
 ---
 

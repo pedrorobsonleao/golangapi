@@ -51,6 +51,11 @@ type ServerInterface interface {
   - `/actuator/health` -> `{"status": "UP"}`
   - `/actuator/sbom` -> `{"status": "UP", "sbom": "provided"}`
   - `/actuator/sbom/application` -> `{"status": "UP", "application": "golang-api"}`
+- **Endpoints de Swagger UI:** Implemente as seguintes rotas públicas para consulta do swagger:
+  - `/swagger-ui` -> Retorna a página HTML interativa que carrega o Swagger UI a partir de um CDN.
+  - `/swagger-ui/` -> Redireciona para `/swagger-ui`.
+  - `/swagger-ui/openapi.yaml` -> Serve o arquivo de contrato OpenAPI 3.0 embutido (`openapi.yaml`) utilizando a diretiva `//go:embed` e o tipo `text/yaml`.
+  - **Exceção de Middleware**: Certifique-se de que o middleware de JWT ignore estas rotas públicas para permitir o acesso livre de credenciais.
 
 ### Passo 5: Substituição do Container `java_app`
 Garanta que a nova aplicação em Go substitua de vez a antiga aplicação Java.
