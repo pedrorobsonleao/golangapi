@@ -8,4 +8,4 @@ oapi-codegen \
         --output-format yaml \
         <( curl --silent http://localhost:8080/v3/api-docs ) \
     ) \
-    > src/api.gen.go
+    > src/api/api.gen.go
