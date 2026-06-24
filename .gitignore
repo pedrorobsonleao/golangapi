@@ -34,3 +34,5 @@ go.work.sum
 # HTML reports (Code coverage and Newman integration test reports)
 *.html
 newman/tests/newman/*.html
+
+.vscode/
