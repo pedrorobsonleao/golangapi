@@ -30,3 +30,9 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# HTML reports (Code coverage and Newman integration test reports)
+*.html
+newman/tests/newman/*.html
+
+.vscode/
