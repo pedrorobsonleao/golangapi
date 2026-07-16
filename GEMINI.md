@@ -8,8 +8,8 @@ This document contains foundational mandates, architecture patterns, and convent
 
 Acesse outros guias e documentações do projeto nos links abaixo:
 
-- 📖 [**README.md** (Visão Geral e Arquitetura do Projeto)](file:///home/pleao/Documents/Projects/golang/golangapi/README.md)
-- 🚀 [**ANTIGRAVITY.md** (Guia de Reprodução Automática)](file:///home/pleao/Documents/Projects/golang/golangapi/ANTIGRAVITY.md)
+- 📖 [**README.md** (Visão Geral e Arquitetura do Projeto)](README.md)
+- 🚀 [**ANTIGRAVITY.md** (Guia de Reprodução Automática)](ANTIGRAVITY.md)
 
 ---
 
