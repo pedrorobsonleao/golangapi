@@ -4,6 +4,15 @@ This document contains foundational mandates, architecture patterns, and convent
 
 ---
 
+## 📚 Documentos Relacionados do Projeto
+
+Acesse outros guias e documentações do projeto nos links abaixo:
+
+- 📖 [**README.md** (Visão Geral e Arquitetura do Projeto)](file:///home/pleao/Documents/Projects/golang/golangapi/README.md)
+- 🚀 [**ANTIGRAVITY.md** (Guia de Reprodução Automática)](file:///home/pleao/Documents/Projects/golang/golangapi/ANTIGRAVITY.md)
+
+---
+
 ## 1. Project Overview & Technologies
 
 This is a high-performance REST API developed in **Go (Golang)**, designed as a modern, contract-first migration from a reference Java Spring Boot API. It manages individuals (pessoas) and validates business contracts.

@@ -36,3 +36,9 @@ go.work.sum
 newman/tests/newman/*.html
 
 .vscode/
+
+
+# jmeter tests
+jmeter/reports/
+jmeter/*.jtl
+jmeter/*.log

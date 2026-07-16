@@ -1,6 +1,15 @@
 # API Go (Golang) - Guia de Construção, Arquitetura e Estrutura
 
-Este repositório contém a base e os recursos para a migração/construção de uma API REST de alta performance desenvolvida em **Go (Golang)**, baseada em um contrato OpenAPI e validada via testes de integração automatizados (Newman/Postman).
+Este repositório contém a base e os recursos para a migração/construção de uma API REST de alta performance desenvolvida em **Go (Golang)**, baseada em um contrato OpenAPI e validada via testes de integração automatizados (Newman/Postman) e testes de carga (JMeter).
+
+---
+
+## 📚 Documentos Relacionados do Projeto
+
+Abaixo estão os guias de desenvolvimento e conformidade fundamentais deste projeto:
+
+- 📋 [**GEMINI.md** (Mandatos Fundamentais e Diretrizes do Projeto)](file:///home/pleao/Documents/Projects/golang/golangapi/GEMINI.md): Regras de desenvolvimento, layouts de pacotes e convenções de código que possuem precedência absoluta.
+- 🚀 [**ANTIGRAVITY.md** (Guia de Reprodução Automática)](file:///home/pleao/Documents/Projects/golang/golangapi/ANTIGRAVITY.md): Checklist detalhado e passo-a-passo para reconstruir e rodar a API Go a partir do contrato OpenAPI.
 
 ---
 
@@ -11,34 +20,37 @@ O fluxo de dados, conectores e orquestração de containers no ecossistema Docke
 ```mermaid
 graph TD
     subgraph Host ["Máquina Hospedeira"]
-        P_PMA["Porta 9090"] --> PMA
-        P_APP["Porta 8080"] --> APP
-        P_DB["Porta 3306"] --> DB
+        P_PMA["Porta 9090"] --> PMA["dbadmin (phpMyAdmin)"]
+        P_APP["Porta 8080"] --> APP["go_app (API REST em Go)"]
+        P_DB["Porta 3306"] --> DB[("golangapi-mysql-1 (MariaDB)")]
     end
 
     subgraph Docker_Compose ["Ambiente Docker Compose"]
-        PMA["dbadmin (phpMyAdmin)"] -- "Gerencia" --> DB
+        PMA -- "Gerencia" --> DB
         
-        APP["go_app (API REST em Go)"] -- "Conecta / Persiste" --> DB
+        APP -- "Conecta / Persiste" --> DB
         APP -- "Gera em Memória" --> RSA["Par de Chaves RSA (2048-bit)"]
         
-        DB[("golangapi-mysql-1 (MariaDB)")]
+        NEWMAN["api_tests (Postman / Newman)"] -- "1. Dispara Testes de Contrato" --> APP
+        NEWMAN -- "2. Exporta Relatórios HTML" --> VOL_NEWMAN[("Volume local: ./newman/tests")]
         
-        NEWMAN["api_tests (Postman / Newman)"] -- "1. Dispara Testes" --> APP
-        NEWMAN -- "2. Exporta Relatórios" --> VOL[("Volume local: ./newman/tests")]
+        JMETER["jmeter_tests (JMeter)"] -- "3. Dispara Testes de Carga" --> APP
+        JMETER -- "4. Exporta Relatórios HTML" --> VOL_JMETER[("Volume local: ./jmeter")]
     end
 
     style Docker_Compose fill:#f9f9f9,stroke:#333,stroke-width:2px
     style APP fill:#e1f5fe,stroke:#039be5,stroke-width:2px
     style DB fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
     style NEWMAN fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    style JMETER fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px
 ```
 
-### Componentes de Infraestrutura:
-- **`mysql` (MariaDB)**: Banco de dados relacional que persiste as informações da entidade `pessoa`. É inicializado automaticamente pela API Go caso a tabela ainda não exista.
-- **`app` (`go_app`)**: O servidor HTTP desenvolvido em Go usando a biblioteca Echo. Genericamente construído para substituir a antiga referência em Java (`java_app`).
+### Componentes de Infraestrutura configurados no [docker-compose.yml](file:///home/pleao/Documents/Projects/golang/golangapi/docker-compose.yml):
+- **`mysql` (MariaDB)**: Banco de dados relacional que persiste as informações da entidade `pessoa`. Inicializado automaticamente pela API Go caso a tabela ainda não exista.
+- **`app` (`go_app`)**: O servidor HTTP de alta performance desenvolvido em Go usando a biblioteca Echo.
 - **`phpadmin` (`dbadmin`)**: Interface administrativa web do banco de dados, mapeada localmente na porta `9090`.
-- **`newman` (`api_tests`)**: Runner de testes do Postman que valida todos os endpoints de negócio, limites de validação de payload, autenticação JWT, tratamento de erros 404/401 e conformidade de contrato.
+- **`newman` (`api_tests`)**: Runner do Postman que executa os testes de integração para verificar conformidade do contrato.
+- **`jmeter` (`jmeter_tests`)**: Ferramenta de teste de performance que dispara requisições concorrentes e gera relatórios em tempo real.
 
 ---
 
@@ -47,33 +59,34 @@ graph TD
 Para garantir manutenções futuras limpas e elegantes, todo o código em Go foi concentrado e organizado sob a pasta `src/`:
 
 *   **`src/`**: Diretório principal do código-fonte Go, rodando no pacote `main`.
-    *   `src/main.go`: Ponto de entrada do sistema. Gerencia carregamento de ambientes, retry de conexões com o banco de dados, geração de chaves RSA em tempo de execução, middlewares (segurança JWT baseada em chave pública RSA, recuperador e logs estruturados) e endpoints de Actuator.
-    *   `src/server.go`: Implementa os handlers HTTP definidos na interface gerada do OpenAPI. Conecta e valida parâmetros de entrada.
-    *   `src/store.go`: Camada robusta de acesso a dados (Repository Pattern) que abstrai as queries SQL brutas para o banco MariaDB.
-    *   `src/server_test.go`: Suite de testes unitários com Mock de banco de dados para garantir alta cobertura e segurança antes de compilar.
-    *   `src/openapi.yaml`: Arquivo do contrato da especificação OpenAPI 3.0 utilizado e embutido estaticamente na API para servir o Swagger UI.
+    *   [src/main.go](file:///home/pleao/Documents/Projects/golang/golangapi/src/main.go): Ponto de entrada do sistema. Gerencia carregamento de ambientes, retry de conexões com o banco de dados, geração de chaves RSA em tempo de execução, middlewares (segurança JWT baseada em chave pública RSA, recuperador e logs estruturados) e endpoints de Actuator.
+    *   [src/server.go](file:///home/pleao/Documents/Projects/golang/golangapi/src/server.go): Implementa os handlers HTTP definidos na interface gerada do OpenAPI. Conecta e valida parâmetros de entrada.
+    *   [src/store.go](file:///home/pleao/Documents/Projects/golang/golangapi/src/store.go): Camada robusta de acesso a dados (Repository Pattern) que abstrai as queries SQL brutas para o banco MariaDB.
+    *   [src/server_test.go](file:///home/pleao/Documents/Projects/golang/golangapi/src/server_test.go): Suite de testes unitários com Mock de banco de dados para garantir alta cobertura e segurança antes de compilar.
+    *   [src/openapi.yaml](file:///home/pleao/Documents/Projects/golang/golangapi/src/openapi.yaml): Arquivo do contrato da especificação OpenAPI 3.0 utilizado e embutido estaticamente na API para servir o Swagger UI.
 *   **`src/api/`**: Subpasta dedicada para isolar o pacote auto-gerado.
-    *   `src/api/api.gen.go`: Scaffold de tipos, wrappers e interfaces geradas a partir do OpenAPI.
-*   **`db/`**: Guarda os segredos de senhas de root e usuários do MariaDB (`pwd.txt`).
+    *   [src/api/api.gen.go](file:///home/pleao/Documents/Projects/golang/golangapi/src/api/api.gen.go): Scaffold de tipos, wrappers e interfaces geradas a partir do OpenAPI.
+*   **`db/`**: Guarda os segredos de senhas de root e usuários do MariaDB ([db/pwd.txt](file:///home/pleao/Documents/Projects/golang/golangapi/db/pwd.txt)).
 *   **`newman/`**: Suite de testes automatizados de integração:
-    *   `tests/simple_spring_boot_rest_api.postman_collection.json`: Coleção de chamadas do Postman.
-    *   `tests/test-docker.postman_environment.json` & `test-local.postman_environment.json`: Variáveis de ambientes locais ou do Docker Compose.
-    *   `tests/newman/`: Pasta ignorada pelo git para salvar os relatórios extra em HTML.
-*   **`Makefile`**: Orquestrador e simplificador de comandos locais de compilação, testes e cobertura.
+    *   [simple_spring_boot_rest_api.postman_collection.json](file:///home/pleao/Documents/Projects/golang/golangapi/newman/tests/simple_spring_boot_rest_api.postman_collection.json): Coleção de chamadas do Postman.
+    *   [test-docker.postman_environment.json](file:///home/pleao/Documents/Projects/golang/golangapi/newman/tests/test-docker.postman_environment.json) & [test-local.postman_environment.json](file:///home/pleao/Documents/Projects/golang/golangapi/newman/tests/test-local.postman_environment.json): Variáveis de ambientes locais ou do Docker Compose.
+*   **`jmeter/`**: Suite de testes de carga e performance:
+    *   [springbootapi.jmx](file:///home/pleao/Documents/Projects/golang/golangapi/jmeter/springbootapi.jmx): Script de testes do JMeter configurado com asserções de validação de contrato equivalentes ao Postman.
+*   [Makefile](file:///home/pleao/Documents/Projects/golang/golangapi/Makefile): Orquestrador e simplificador de comandos locais de compilação, testes e cobertura.
 
 ---
 
-## 3. Guia de Uso Rápidas (Utilizando o Makefile)
+## 3. Guia de Uso Rápido
 
 ### Requisitos Prévios
 - **Go (Golang)**: Versão `1.26` ou superior.
 - **Docker & Docker Compose**: Para orquestração.
 - **oapi-codegen**: Caso queira regerar código a partir do OpenAPI schema (`go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest`).
-- **yq**: Utilitário YAML (`build.sh`).
+- **yq**: Utilitário YAML ([build.sh](file:///home/pleao/Documents/Projects/golang/golangapi/build.sh)).
 
 ### Comandos de Compilação Local e Qualidade de Código
 
-O **`Makefile`** automatiza todos os comandos comuns de desenvolvimento local:
+O [Makefile](file:///home/pleao/Documents/Projects/golang/golangapi/Makefile) automatiza todos os comandos comuns de desenvolvimento local:
 
 ```bash
 # 1. Copiar as configurações de ambiente
@@ -97,17 +110,15 @@ make clean
 
 ### Execução via Docker Compose (Integração de Ponta a Ponta)
 
-Para iniciar toda a infraestrutura limpa, compilar a API em container e disparar os testes integrados com o Newman:
+Para iniciar toda a infraestrutura limpa, compilar a API em container e disparar os testes integrados:
 
 ```bash
-# Sobe banco MariaDB, phpMyAdmin, Go App, e executa os testes automatizados
+# Sobe banco MariaDB, phpMyAdmin, Go App, executa o Newman e em seguida roda o JMeter
 docker compose up --build
 ```
 
-Aguarde o container de testes `api_tests` finalizar. Ao término com sucesso, você verá no console:
-`api_tests exited with code 0`
-
-Todos os relatórios visuais HTML gerados pelo Newman e pelo gerador de cobertura de código do Go estão configurados no `.gitignore` para que **nunca sejam comitados por engano** no repositório.
+- **Newman:** O container de testes `api_tests` executará 10 iterações e gerará um relatório HTML em `newman/tests/newman/`. Ao término com sucesso, você verá: `api_tests exited with code 0`.
+- **JMeter:** O container `jmeter_tests` iniciará automaticamente após o sucesso do Newman, disparando testes de carga de 10 threads durante 30 segundos, validando códigos HTTP e asserções JSON. O relatório gráfico interativo em HTML será gerado na pasta `jmeter/reports/`.
 
 ---
 
@@ -118,4 +129,4 @@ O servidor Go serve nativamente a documentação interativa baseada no Swagger U
 - **Swagger UI Interativo**: `http://localhost:8080/swagger-ui` (ou na porta definida por `APP_PORT`).
 - **Contrato OpenAPI (YAML)**: `http://localhost:8080/swagger-ui/openapi.yaml`.
 
-Esta documentação é 100% autônoma e pública (bypassa a verificação de JWT), carregando dinamicamente a especificação OpenAPI 3.0 definida em `src/openapi.yaml` que foi embutida diretamente no executável final.
+Esta documentação é 100% autônoma e pública (bypassa a verificação de JWT), carregando dinamicamente a especificação OpenAPI 3.0 definida em [src/openapi.yaml](file:///home/pleao/Documents/Projects/golang/golangapi/src/openapi.yaml) que foi embutida diretamente no executável final.
