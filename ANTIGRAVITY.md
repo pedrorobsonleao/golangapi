@@ -8,8 +8,8 @@ Este arquivo define os passos necessários para migrar e construir a API REST em
 
 Acesse outros guias e documentações do projeto nos links abaixo:
 
-- 📖 [**README.md** (Visão Geral e Arquitetura do Projeto)](file:///home/pleao/Documents/Projects/golang/golangapi/README.md)
-- 📋 [**GEMINI.md** (Mandatos Fundamentais e Diretrizes do Projeto)](file:///home/pleao/Documents/Projects/golang/golangapi/GEMINI.md)
+- 📖 [**README.md** (Visão Geral e Arquitetura do Projeto)](README.md)
+- 📋 [**GEMINI.md** (Mandatos Fundamentais e Diretrizes do Projeto)](GEMINI.md)
 
 ---
 
