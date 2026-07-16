@@ -4,6 +4,15 @@ Este arquivo define os passos necessários para migrar e construir a API REST em
 
 ---
 
+## 📚 Documentos Relacionados do Projeto
+
+Acesse outros guias e documentações do projeto nos links abaixo:
+
+- 📖 [**README.md** (Visão Geral e Arquitetura do Projeto)](file:///home/pleao/Documents/Projects/golang/golangapi/README.md)
+- 📋 [**GEMINI.md** (Mandatos Fundamentais e Diretrizes do Projeto)](file:///home/pleao/Documents/Projects/golang/golangapi/GEMINI.md)
+
+---
+
 ## 📋 Checklist de Passos para Execução / Reprodução
 
 ### Passo 1: Geração do Scaffold de Código (oapi-codegen)
