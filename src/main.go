@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -64,6 +65,20 @@ func main() {
 	}
 	log.Println("Database connection established successfully.")
 	defer db.Close()
+
+	// Configure database connection pool tuning to handle high load without connection churn or port exhaustion.
+	maxOpenConns := getEnvAsInt("DB_MAX_OPEN_CONNS", 100)
+	maxIdleConns := getEnvAsInt("DB_MAX_IDLE_CONNS", 50)
+	connMaxLifetime := getEnvAsDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute)
+	connMaxIdleTime := getEnvAsDuration("DB_CONN_MAX_IDLE_TIME", 2*time.Minute)
+
+	db.SetMaxOpenConns(maxOpenConns)
+	db.SetMaxIdleConns(maxIdleConns)
+	db.SetConnMaxLifetime(connMaxLifetime)
+	db.SetConnMaxIdleTime(connMaxIdleTime)
+
+	log.Printf("Database connection pool configured: MaxOpen=%d, MaxIdle=%d, MaxLifetime=%v, MaxIdleTime=%v",
+		maxOpenConns, maxIdleConns, connMaxLifetime, connMaxIdleTime)
 
 	// Initialize database schema
 	// Automatically creates the relational 'pessoa' table if it doesn't already exist.
@@ -241,6 +256,26 @@ func jwtMiddleware(verifyKey *rsa.PublicKey) echo.MiddlewareFunc {
 func getEnv(key, fallback string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
+	}
+	return fallback
+}
+
+// getEnvAsInt extracts the env variable matching 'key' and parses it to an integer; returns 'fallback' if missing or invalid.
+func getEnvAsInt(key string, fallback int) int {
+	if valStr, exists := os.LookupEnv(key); exists {
+		if val, err := strconv.Atoi(valStr); err == nil {
+			return val
+		}
+	}
+	return fallback
+}
+
+// getEnvAsDuration extracts the env variable matching 'key' and parses it to a time.Duration; returns 'fallback' if missing or invalid.
+func getEnvAsDuration(key string, fallback time.Duration) time.Duration {
+	if valStr, exists := os.LookupEnv(key); exists {
+		if val, err := time.ParseDuration(valStr); err == nil {
+			return val
+		}
 	}
 	return fallback
 }

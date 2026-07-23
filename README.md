@@ -130,3 +130,21 @@ O servidor Go serve nativamente a documentação interativa baseada no Swagger U
 - **Contrato OpenAPI (YAML)**: `http://localhost:8080/swagger-ui/openapi.yaml`.
 
 Esta documentação é 100% autônoma e pública (bypassa a verificação de JWT), carregando dinamicamente a especificação OpenAPI 3.0 definida em [src/openapi.yaml](src/openapi.yaml) que foi embutida diretamente no executável final.
+
+---
+
+## 5. 🚀 Ajuste de Performance e Pool de Conexões (Testes de Carga / JMeter)
+
+Durante testes de carga pesados ou prolongados no **JMeter** (ex: 100+ threads por longos períodos), a aplicação Go pode sofrer exaustão de sockets TCP e portas locais devido à alta taxa de conexões abertas e fechadas constantemente.
+
+Para evitar esses gargalos de concorrência e exaustão de recursos, a API conta com uma camada configurável de **Pool de Conexões** no banco de dados (`sql.DB`), eliminando o churn de conexões:
+
+### Configurações de Ajuste (Tuning) no `.env`:
+Você pode definir e ajustar essas variáveis diretamente no arquivo `.env` para adequar aos seus testes de performance:
+
+*   **`DB_MAX_OPEN_CONNS`**: O limite de conexões simultâneas que a aplicação pode abrir no banco (Default: `100`). Evita estourar o limite padrão do banco de dados (geralmente `151` no MariaDB).
+*   **`DB_MAX_IDLE_CONNS`**: O número de conexões inativas que a aplicação mantém abertas no pool para reuso imediato (Default: `50`). Evita o fechamento e reabertura constante de sockets TCP.
+*   **`DB_CONN_MAX_LIFETIME`**: Tempo máximo de vida de uma conexão no pool (Default: `5m`).
+*   **`DB_CONN_MAX_IDLE_TIME`**: Tempo máximo que uma conexão pode ficar ociosa antes de ser descartada (Default: `2m`).
+
+Isso garante que a aplicação mantenha uma latência extremamente baixa e estabilidade sob alta concorrência contínua, mesmo em execuções prolongadas do JMeter.
